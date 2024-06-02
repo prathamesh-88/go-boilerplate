@@ -31,7 +31,7 @@ func (a *Auth) SignUp(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   err,
+			"error":   err.Error(),
 		})
 		return
 	}

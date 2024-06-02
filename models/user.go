@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
+	"fmt"
 	"log"
 	"time"
 
@@ -24,8 +25,20 @@ func CreateUser(user *User) (User, error) {
 
 	passwordHashBytes := sha256.Sum256([]byte(user.Password))
 	hashedPassword := hex.EncodeToString(passwordHashBytes[:])
+	var existingUser User
+	rows, err := GetUserByEmail(user.Email)
 
-	rows, err := database.Db.Query(`
+	if err != nil {
+		return User{}, err
+	}
+
+	firstResult := rows.Next()
+
+	if firstResult {
+		return User{}, fmt.Errorf("User with email %s already exists", existingUser.Email)
+	}
+
+	rows, err = database.Db.Query(`
 		INSERT INTO users(username, email, password, role, is_email_verified, created_at, updated_at) VALUES
 		($1, $2, $3, $4, $5, NOW(), NOW());
 		`,
@@ -54,8 +67,6 @@ func GetUserByEmail(email string) (*sql.Rows, error) {
 		log.Fatalf("Error while fetching users")
 		return nil, err
 	}
-
-	log.Println(rows)
 
 	return rows, nil
 }
